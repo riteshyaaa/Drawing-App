@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simple Drawing App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app" role="application" aria-label="Simple drawing app">
+      <aside class="controls" aria-hidden="false">
+        <h2>Tools</h2>
+        <div class="row">
+          <label for="color">Color</label>
+          <input id="color" type="color" value="#111827" title="Brush color" />
+        </div>
+        <div class="row">
+          <label for="size">Brush</label>
+          <input id="size" type="range" min="1" max="80" value="6" />
+        </div>
+        <div class="row">
+          <label for="mode">Mode</label>
+          <select id="mode" title="Drawing mode">
+            <option value="draw">Draw</option>
+            <option value="erase">Eraser</option>
+          </select>
+        </div>
+
+        <div class=" tools">
+          <button id="undo" class="ghost">Undo</button>
+          <button id="clear" class="ghost">Clear</button>
+          <button id="save">Save PNG</button>
+        </div>
+
+        <div style="flex: 1"></div>
+        <div class="meta">
+          Tip: Use mouse or touch to draw. Resize the window to adapt canvas
+          size.
+        </div>
+        <footer>Simple Drawing App • lightweight • offline</footer>
+      </aside>
+
+      <main class="canvas-wrap">
+        <div class="canvas-area">
+          <canvas
+            id="draw"
+            width="800"
+            height="600"
+            aria-label="Drawing canvas"
+          ></canvas>
+        </div>
+      </main>
+    </div>
+
+    <script src="drawing.js"></script>
+  </body>
+</html>
