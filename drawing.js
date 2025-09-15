@@ -15,11 +15,35 @@
     lastY = 0;
   const undoStack = [];
 
+  // 🔹 Retina setup
+  function resizeCanvasForRetina() {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset any existing scale
+    ctx.scale(ratio, ratio);
+
+    // reset background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    ctx.strokeStyle = colorPicker.value;
+    ctx.lineWidth = parseInt(sizeRange.value, 10) || 6;
+  }
+
+  resizeCanvasForRetina();
+  window.addEventListener("resize", resizeCanvasForRetina);
+
   function pushUndo() {
     try {
       undoStack.push(canvas.toDataURL("image/png"));
     } catch (_) {
-        
       /* ignore */
     }
     if (undoStack.length > 30) undoStack.shift();
@@ -31,7 +55,9 @@
     const img = new Image();
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+      // ✅ scale image to canvas size
+      const rect = canvas.getBoundingClientRect();
+      ctx.drawImage(img, 0, 0, rect.width, rect.height);
     };
     img.src = url;
   }
@@ -48,6 +74,7 @@
     }
   }
 
+  // 🔹 FIXED: no double-scaling, just return CSS pixel coordinates
   function getPointerPos(e) {
     const rect = canvas.getBoundingClientRect();
     const isTouch = e.touches || e.changedTouches;
@@ -57,7 +84,11 @@
     const clientY = isTouch
       ? e.touches?.[0]?.clientY ?? e.changedTouches?.[0]?.clientY
       : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
   }
 
   function startDrawing(e) {
@@ -89,15 +120,18 @@
     ctx.closePath();
   }
 
+  // Mouse events
   canvas.addEventListener("mousedown", startDrawing);
   canvas.addEventListener("mousemove", draw);
   canvas.addEventListener("mouseup", stopDrawing);
   canvas.addEventListener("mouseleave", stopDrawing);
 
+  // Touch events
   canvas.addEventListener("touchstart", startDrawing, { passive: false });
   canvas.addEventListener("touchmove", draw, { passive: false });
   canvas.addEventListener("touchend", stopDrawing);
 
+  // Controls
   colorPicker.addEventListener("change", () => {
     if (modeSelect.value === "draw") ctx.strokeStyle = colorPicker.value;
   });
@@ -108,23 +142,18 @@
   clearBtn.addEventListener("click", () => {
     pushUndo();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    resizeCanvasForRetina(); // refill bg
   });
 
   saveBtn.addEventListener("click", () => {
-    const ratio = window.devicePixelRatio || 1;
-    const tmp = document.createElement("canvas");
-    tmp.width = canvas.clientWidth * ratio;
-    tmp.height = canvas.clientHeight * ratio;
-    const tctx = tmp.getContext("2d");
-    tctx.scale(ratio, ratio);
-    tctx.drawImage(canvas, 0, 0);
-    const url = tmp.toDataURL("image/png");
+    const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = url;
     a.download = "drawing.png";
     a.click();
   });
 
+  // Keyboard shortcuts
   window.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
       e.preventDefault();
@@ -135,9 +164,4 @@
       saveBtn.click();
     }
   });
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = colorPicker.value;
-  ctx.lineWidth = parseInt(sizeRange.value, 10) || 6;
 })();
